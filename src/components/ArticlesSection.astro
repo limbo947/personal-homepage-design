@@ -1,0 +1,40 @@
+---
+// 近期文章：3 列卡片网格，封面占位 + 标题 + 摘要 + 分类与日期
+// 数据从集中配置读取，后续可改为从 RSS/API 动态拉取
+import { siteConfig } from '../data/config';
+
+const { articles } = siteConfig;
+---
+
+<section id="articles" class="scroll-mt-24 py-20">
+  <div class="mx-auto max-w-6xl px-6">
+    <h2 class="text-center" style="font-size:var(--personal-font-size-h2);font-weight:var(--personal-font-weight-h2);line-height:var(--personal-line-height-h2)">近期文章</h2>
+    <p class="mt-3 text-center text-[var(--personal-muted-foreground)]" style="font-size:var(--personal-font-size-body);line-height:var(--personal-line-height-body)">最近的思考与记录</p>
+
+    <div class="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3" data-cfg-list="articles">
+      {articles.map((a, i) => (
+        <article class="group overflow-hidden rounded-md border border-[var(--personal-border)] bg-[var(--personal-card)] shadow-[var(--personal-shadow-card)] transition-[border-color,box-shadow] hover:border-[var(--personal-primary)] hover:shadow-[var(--personal-shadow-card-hover)]" data-cfg-row data-cfg-row-prefix={`articles.${i}`}>
+          <div class="article-cover relative overflow-hidden transition-colors group-hover:bg-[var(--personal-primary-100)]">
+            <i data-lucide={a.icon} class="absolute left-1/2 top-1/2 h-10 w-10 -translate-x-1/2 -translate-y-1/2 text-[var(--personal-primary-300)] transition-transform duration-300 group-hover:scale-105"></i>
+          </div>
+          <div class="p-5">
+            <h3 class="transition-colors group-hover:text-[var(--personal-primary-600)]" style="font-size:var(--personal-font-size-h3);font-weight:var(--personal-font-weight-h3);line-height:var(--personal-line-height-h3)" data-cfg={`articles.${i}.title`}>{a.title}</h3>
+            <p class="mt-2 line-clamp-2 text-[var(--personal-muted-foreground)]" style="font-size:var(--personal-font-size-body);line-height:var(--personal-line-height-body)" data-cfg={`articles.${i}.desc`}>{a.desc}</p>
+            <div class="mt-4 flex items-center justify-between text-[var(--personal-muted-foreground)]" style="font-family:var(--personal-font-display);font-size:var(--personal-font-size-caption)">
+              <span data-cfg={`articles.${i}.category`}>{a.category}</span>
+              <span data-cfg={`articles.${i}.date`}>{a.date}</span>
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  /* 文章封面占位：16:9 浅色块 */
+  .article-cover {
+    aspect-ratio: 16 / 9;
+    background-color: var(--personal-primary-50);
+  }
+</style>

@@ -1,0 +1,898 @@
+---
+// 配置编辑面板：浮层表单实时修改关键字段，保存到 localStorage 后即时刷新页面
+// 仅 dev 模式渲染（DefaultLayout 中 import.meta.env.DEV 控制），生产构建不输出
+import { siteConfig } from '../data/config';
+import { THEME_PRESETS } from '../data/theme-presets';
+
+/**
+ * 可编辑字段定义
+ *
+ * path 对应 data-cfg 属性值与 localStorage 覆盖表的 key；
+ * type 决定表单控件（text 单行 / textarea 多行）；
+ * group 用于面板内分组渲染，让用户快速定位；
+ * default 取自集中配置，用于「与默认值一致则不存储」的优化；
+ * arrayPath/arrayIndex 标记该字段属于哪个数组及索引，用于运行时增删
+ */
+interface EditField {
+  path: string;
+  label: string;
+  type: 'text' | 'textarea' | 'image' | 'color';
+  default: string;
+  group: string;
+  arrayPath?: string;
+  arrayIndex?: number;
+}
+
+const fields: EditField[] = [
+  // 基础信息
+  { path: 'site.author', label: '署名 / 品牌名', type: 'text', default: siteConfig.site.author, group: '基础信息' },
+  { path: 'hero.badgeText', label: 'Hero 徽标文案', type: 'text', default: siteConfig.hero.badgeText, group: '基础信息' },
+  { path: 'footer.motto', label: '页脚格言', type: 'textarea', default: siteConfig.footer.motto, group: '基础信息' },
+
+  // Hero 首屏
+  { path: 'hero.title', label: '主标题', type: 'text', default: siteConfig.hero.title, group: 'Hero 首屏' },
+  { path: 'hero.subtitle', label: '副标题', type: 'text', default: siteConfig.hero.subtitle, group: 'Hero 首屏' },
+  { path: 'hero.image', label: '首屏照片', type: 'image', default: siteConfig.hero.image ?? '', group: 'Hero 首屏' },
+  { path: 'hero.description', label: '描述', type: 'textarea', default: siteConfig.hero.description, group: 'Hero 首屏' },
+  { path: 'hero.primaryAction.text', label: '主按钮文案', type: 'text', default: siteConfig.hero.primaryAction.text, group: 'Hero 首屏' },
+  ...siteConfig.hero.skills.map<EditField>((s, i) => ({
+    path: `hero.skills.${i}`,
+    label: `技能 ${i + 1}`,
+    type: 'text',
+    default: s,
+    group: 'Hero 首屏',
+    arrayPath: 'hero.skills',
+    arrayIndex: i,
+  })),
+  ...siteConfig.hero.stats.flatMap<EditField>((st, i) => [
+    { path: `hero.stats.${i}.value`, label: `统计 ${i + 1} 数值`, type: 'text', default: st.value, group: 'Hero 首屏', arrayPath: 'hero.stats', arrayIndex: i },
+    { path: `hero.stats.${i}.label`, label: `统计 ${i + 1} 标签`, type: 'text', default: st.label, group: 'Hero 首屏', arrayPath: 'hero.stats', arrayIndex: i },
+  ]),
+
+  // 精选项目
+  ...siteConfig.projects.flatMap<EditField>((p, i) => [
+    { path: `projects.${i}.title`, label: `标题`, type: 'text', default: p.title, group: '精选项目', arrayPath: 'projects', arrayIndex: i },
+    { path: `projects.${i}.desc`, label: `描述`, type: 'textarea', default: p.desc, group: '精选项目', arrayPath: 'projects', arrayIndex: i },
+    { path: `projects.${i}.lang`, label: `语言`, type: 'text', default: p.lang, group: '精选项目', arrayPath: 'projects', arrayIndex: i },
+    { path: `projects.${i}.stars`, label: `Star`, type: 'text', default: p.stars, group: '精选项目', arrayPath: 'projects', arrayIndex: i },
+    { path: `projects.${i}.year`, label: `年份`, type: 'text', default: p.year, group: '精选项目', arrayPath: 'projects', arrayIndex: i },
+    { path: `projects.${i}.license`, label: `协议`, type: 'text', default: p.license, group: '精选项目', arrayPath: 'projects', arrayIndex: i },
+  ]),
+
+  // 上线网站
+  ...siteConfig.sites.flatMap<EditField>((s, i) => [
+    { path: `sites.${i}.title`, label: `标题`, type: 'text', default: s.title, group: '上线网站', arrayPath: 'sites', arrayIndex: i },
+    { path: `sites.${i}.desc`, label: `描述`, type: 'textarea', default: s.desc, group: '上线网站', arrayPath: 'sites', arrayIndex: i },
+    { path: `sites.${i}.tag`, label: `标签`, type: 'text', default: s.tag, group: '上线网站', arrayPath: 'sites', arrayIndex: i },
+  ]),
+
+  // 近期文章
+  ...siteConfig.articles.flatMap<EditField>((a, i) => [
+    { path: `articles.${i}.title`, label: `标题`, type: 'text', default: a.title, group: '近期文章', arrayPath: 'articles', arrayIndex: i },
+    { path: `articles.${i}.desc`, label: `摘要`, type: 'textarea', default: a.desc, group: '近期文章', arrayPath: 'articles', arrayIndex: i },
+    { path: `articles.${i}.category`, label: `分类`, type: 'text', default: a.category, group: '近期文章', arrayPath: 'articles', arrayIndex: i },
+    { path: `articles.${i}.date`, label: `日期`, type: 'text', default: a.date, group: '近期文章', arrayPath: 'articles', arrayIndex: i },
+  ]),
+
+  // 主题配色 - 亮色
+  { path: 'theme.light.background', label: '页面底色', type: 'color', default: siteConfig.theme?.light.background ?? '#faf8f5', group: '配色 · 亮色' },
+  { path: 'theme.light.foreground', label: '正文色', type: 'color', default: siteConfig.theme?.light.foreground ?? '#26221d', group: '配色 · 亮色' },
+  { path: 'theme.light.card', label: '卡片底色', type: 'color', default: siteConfig.theme?.light.card ?? '#ffffff', group: '配色 · 亮色' },
+  { path: 'theme.light.border', label: '描边色', type: 'color', default: siteConfig.theme?.light.border ?? '#e4ded4', group: '配色 · 亮色' },
+  { path: 'theme.light.primary', label: '主色', type: 'color', default: siteConfig.theme?.light.primary ?? '#1a8c8c', group: '配色 · 亮色' },
+  { path: 'theme.light.accent', label: '点缀色', type: 'color', default: siteConfig.theme?.light.accent ?? '#b0631b', group: '配色 · 亮色' },
+
+  // 主题配色 - 暗色
+  { path: 'theme.dark.background', label: '页面底色', type: 'color', default: siteConfig.theme?.dark.background ?? '#1a1714', group: '配色 · 暗色' },
+  { path: 'theme.dark.foreground', label: '正文色', type: 'color', default: siteConfig.theme?.dark.foreground ?? '#f2eee8', group: '配色 · 暗色' },
+  { path: 'theme.dark.card', label: '卡片底色', type: 'color', default: siteConfig.theme?.dark.card ?? '#26221d', group: '配色 · 暗色' },
+  { path: 'theme.dark.border', label: '描边色', type: 'color', default: siteConfig.theme?.dark.border ?? '#3a352e', group: '配色 · 暗色' },
+  { path: 'theme.dark.primary', label: '主色', type: 'color', default: siteConfig.theme?.dark.primary ?? '#4cbfbd', group: '配色 · 暗色' },
+  { path: 'theme.dark.accent', label: '点缀色', type: 'color', default: siteConfig.theme?.dark.accent ?? '#e29744', group: '配色 · 暗色' },
+];
+
+/**
+ * 支持运行时增删的数组及其按钮文案
+ * hero.stats 因有前置分隔符结构，增删后分隔符位置处理复杂，暂不支持
+ */
+const addableArrays: Record<string, string> = {
+  'hero.skills': '添加技能',
+  'projects': '添加项目',
+  'sites': '添加站点',
+  'articles': '添加文章',
+};
+
+/**
+ * 子组结构：同一数组同一索引的字段归为一组，方便整组克隆/删除
+ * 非数组字段各自独立成组（arrayPath 为 undefined）
+ */
+interface SubGroup {
+  arrayPath?: string;
+  arrayIndex?: number;
+  fields: EditField[];
+  isLastOfArray: boolean;
+}
+
+const structuredGroups = fieldGroupsForRender();
+
+/** 按 group → 子组 两级分组，子组用于增删按钮的定位 */
+function fieldGroupsForRender() {
+  const groupMap = fields.reduce<Record<string, EditField[]>>((acc, f) => {
+    (acc[f.group] = acc[f.group] || []).push(f);
+    return acc;
+  }, {});
+
+  return Object.entries(groupMap).map(([groupName, groupFields]) => {
+    const subGroups: SubGroup[] = [];
+    let current: SubGroup | null = null;
+    for (const f of groupFields) {
+      if (!current || current.arrayPath !== f.arrayPath || current.arrayIndex !== f.arrayIndex) {
+        current = { arrayPath: f.arrayPath, arrayIndex: f.arrayIndex, fields: [], isLastOfArray: false };
+        subGroups.push(current);
+      }
+      current.fields.push(f);
+    }
+    // 标记每个数组的最后一个子组，用于决定添加按钮位置
+    for (let i = 0; i < subGroups.length; i++) {
+      const sg = subGroups[i];
+      if (!sg.arrayPath) continue;
+      const next = subGroups[i + 1];
+      sg.isLastOfArray = !next || next.arrayPath !== sg.arrayPath;
+    }
+    return [groupName, subGroups] as const;
+  });
+}
+---
+
+<!-- 浮动触发按钮：固定在右下角，避开 Header 右上角的主题切换 -->
+<button
+  type="button"
+  id="edit-panel-trigger"
+  aria-label="编辑配置"
+  class="fixed bottom-6 right-6 z-40 flex h-12 w-12 items-center justify-center rounded-full border border-[var(--personal-border)] bg-[var(--personal-card)] text-[var(--personal-muted-foreground)] shadow-[var(--personal-shadow-card)] transition-colors hover:border-[var(--personal-primary)] hover:text-[var(--personal-primary)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--personal-primary)]"
+>
+  <i data-lucide="settings-2" class="h-5 w-5"></i>
+</button>
+
+<!-- 遮罩层：点击关闭面板 -->
+<div id="edit-panel-overlay" class="fixed inset-0 z-50 hidden bg-black/30 backdrop-blur-sm"></div>
+
+<!-- 滑入式面板：从右侧滑入，移动端自适应宽度 -->
+<aside
+  id="edit-panel"
+  class="fixed right-0 top-0 z-50 flex h-full w-full max-w-md translate-x-full flex-col border-l border-[var(--personal-border)] bg-[var(--personal-card)] shadow-[var(--personal-shadow-card)] transition-transform duration-300"
+  aria-hidden="true"
+>
+  <header class="flex items-center justify-between border-b border-[var(--personal-border)] px-5 py-4">
+    <h2 class="flex items-center gap-2" style="font-size:var(--personal-font-size-h3);font-weight:var(--personal-font-weight-h3)">
+      <i data-lucide="sliders-horizontal" class="h-4 w-4 text-[var(--personal-primary)]"></i>
+      实时编辑
+    </h2>
+    <button
+      type="button"
+      id="edit-panel-close"
+      aria-label="关闭"
+      class="flex h-8 w-8 items-center justify-center rounded-full text-[var(--personal-muted-foreground)] transition-colors hover:bg-[var(--personal-muted)] hover:text-[var(--personal-foreground)]"
+    >
+      <i data-lucide="x" class="h-4 w-4"></i>
+    </button>
+  </header>
+
+  <form id="edit-panel-form" class="flex-1 overflow-y-auto px-5 py-4">
+    <p class="mb-4 text-[var(--personal-muted-foreground)]" style="font-size:var(--personal-font-size-caption)">
+      修改即时保存到本地。删除和固化会直接写回 config.yaml。
+    </p>
+
+    {/* 配色预设：一键切换整套主题，下方颜色字段可继续微调 */}
+    <div class="mb-6 flex flex-col gap-2">
+      <h3 class="text-[var(--personal-primary)]" style="font-size:var(--personal-font-size-caption);font-weight:var(--personal-font-weight-h3)">配色预设</h3>
+      <div class="flex flex-wrap gap-2">
+        {THEME_PRESETS.map(preset => (
+          <button
+            type="button"
+            data-cfg-preset={preset.name}
+            class="group flex items-center gap-1.5 rounded-md border border-[var(--personal-border)] px-2 py-1 transition-colors hover:border-[var(--personal-primary)]"
+            style="font-size:var(--personal-font-size-caption)"
+          >
+            {/* 三色预览：底色 + 主色 + 点缀色，让用户一眼识别调性 */}
+            <span class="flex gap-0.5">
+              <span class="h-3 w-3 rounded-full" style={`background:${preset.light.background};border:1px solid ${preset.light.border}`}></span>
+              <span class="h-3 w-3 rounded-full" style={`background:${preset.light.primary}`}></span>
+              <span class="h-3 w-3 rounded-full" style={`background:${preset.light.accent}`}></span>
+            </span>
+            <span class="text-[var(--personal-foreground)]">{preset.name}</span>
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <!-- 按 group → 子组 两级渲染 -->
+    <div class="flex flex-col gap-6">
+      {structuredGroups.map(([groupName, subGroups]) => (
+        <div class="flex flex-col gap-3">
+          <h3 class="text-[var(--personal-primary)]" style="font-size:var(--personal-font-size-caption);font-weight:var(--personal-font-weight-h3)">{groupName}</h3>
+          {subGroups.map(sg => (
+            <Fragment>
+              {/* 子组容器：同一数组同一索引的字段归为一组，头部带删除按钮 */}
+              {sg.arrayPath ? (
+                <div
+                  class="flex flex-col gap-2 rounded-md border border-[var(--personal-border)] p-3"
+                  data-cfg-subgroup={`${sg.arrayPath}.${sg.arrayIndex}`}
+                >
+                  <div class="flex items-center justify-between">
+                    <span class="text-[var(--personal-muted-foreground)]" style="font-size:var(--personal-font-size-caption)">#{(sg.arrayIndex ?? 0) + 1}</span>
+                    <button
+                      type="button"
+                      data-cfg-delete={`${sg.arrayPath}.${sg.arrayIndex}`}
+                      aria-label="删除"
+                      title="删除此项（直接修改 config.yaml）"
+                      class="flex h-7 w-7 items-center justify-center rounded text-[var(--personal-muted-foreground)] transition-colors hover:bg-[var(--personal-error-50)] hover:text-[var(--personal-error-500)]"
+                    >
+                      <i data-lucide="trash-2" class="h-3.5 w-3.5"></i>
+                    </button>
+                  </div>
+                  {sg.fields.map(f => (
+                    <label class="flex flex-col gap-1">
+                      <span class="text-[var(--personal-foreground)]" style="font-size:var(--personal-font-size-caption)">{f.label}</span>
+                      {f.type === 'textarea' ? (
+                        <textarea
+                          data-cfg-field={f.path}
+                          data-cfg-default={f.default}
+                          rows="2"
+                          class="rounded-md border border-[var(--personal-border)] bg-[var(--personal-background)] px-3 py-2 text-[var(--personal-foreground)] outline-none transition-colors focus:border-[var(--personal-primary)]"
+                          style="font-size:var(--personal-font-size-body);line-height:var(--personal-line-height-body)"
+                        ></textarea>
+                      ) : (
+                        <input
+                          type="text"
+                          data-cfg-field={f.path}
+                          data-cfg-default={f.default}
+                          class="rounded-md border border-[var(--personal-border)] bg-[var(--personal-background)] px-3 py-2 text-[var(--personal-foreground)] outline-none transition-colors focus:border-[var(--personal-primary)]"
+                          style="font-size:var(--personal-font-size-body)"
+                        />
+                      )}
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                /* 非数组字段：平铺无容器 */
+                <div class="flex flex-col gap-2">
+                  {sg.fields.map(f => (
+                    <div class="flex flex-col gap-1.5">
+                      <span class="text-[var(--personal-foreground)]" style="font-size:var(--personal-font-size-caption)">{f.label}</span>
+                      {f.type === 'image' ? (
+                        /* 图片字段：预览方块 + 文件选择 + 隐藏路径 input */
+                        <div class="flex items-center gap-3">
+                          <div class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md border border-[var(--personal-border)] bg-[var(--personal-muted)]">
+                            <img data-cfg-preview="" src={f.default} alt="" class={`h-full w-full object-cover ${f.default ? '' : 'hidden'}`} />
+                            <i data-lucide="image" data-cfg-preview-placeholder="" class={`h-6 w-6 text-[var(--personal-muted-foreground)] ${f.default ? 'hidden' : ''}`}></i>
+                          </div>
+                          <input
+                            type="file"
+                            accept="image/*"
+                            data-cfg-upload=""
+                            class="flex-1 text-[var(--personal-muted-foreground)] file:mr-2 file:cursor-pointer file:rounded file:border-0 file:bg-[var(--personal-primary)] file:px-2 file:py-1 file:text-[var(--personal-primary-foreground)]"
+                            style="font-size:var(--personal-font-size-caption)"
+                          />
+                          <input type="hidden" data-cfg-field={f.path} data-cfg-default={f.default} data-cfg-image-input="" value={f.default} />
+                        </div>
+                      ) : f.type === 'color' ? (
+                        /* 颜色字段：色块预览（点击触发原生取色器）+ hex 文本框 */
+                        <div class="flex items-center gap-2">
+                          <input
+                            type="color"
+                            data-cfg-field={f.path}
+                            data-cfg-default={f.default}
+                            value={f.default}
+                            class="h-8 w-8 shrink-0 cursor-pointer rounded border border-[var(--personal-border)] bg-transparent p-0"
+                          />
+                          <input
+                            type="text"
+                            data-cfg-color-text=""
+                            data-cfg-field={f.path}
+                            data-cfg-default={f.default}
+                            value={f.default}
+                            class="flex-1 rounded-md border border-[var(--personal-border)] bg-[var(--personal-background)] px-2 py-1 font-mono text-[var(--personal-foreground)] outline-none transition-colors focus:border-[var(--personal-primary)]"
+                            style="font-size:var(--personal-font-size-caption)"
+                          />
+                        </div>
+                      ) : f.type === 'textarea' ? (
+                        <textarea
+                          data-cfg-field={f.path}
+                          data-cfg-default={f.default}
+                          rows="3"
+                          class="rounded-md border border-[var(--personal-border)] bg-[var(--personal-background)] px-3 py-2 text-[var(--personal-foreground)] outline-none transition-colors focus:border-[var(--personal-primary)]"
+                          style="font-size:var(--personal-font-size-body);line-height:var(--personal-line-height-body)"
+                        ></textarea>
+                      ) : (
+                        <input
+                          type="text"
+                          data-cfg-field={f.path}
+                          data-cfg-default={f.default}
+                          class="rounded-md border border-[var(--personal-border)] bg-[var(--personal-background)] px-3 py-2 text-[var(--personal-foreground)] outline-none transition-colors focus:border-[var(--personal-primary)]"
+                          style="font-size:var(--personal-font-size-body)"
+                        />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {/* 数组最后一个子组后插入添加按钮 */}
+              {sg.isLastOfArray && sg.arrayPath && addableArrays[sg.arrayPath] ? (
+                <button
+                  type="button"
+                  data-cfg-add={sg.arrayPath}
+                  class="flex items-center justify-center gap-1 rounded-md border border-dashed border-[var(--personal-border)] py-2 text-[var(--personal-muted-foreground)] transition-colors hover:border-[var(--personal-primary)] hover:text-[var(--personal-primary)]"
+                  style="font-size:var(--personal-font-size-caption)"
+                >
+                  <i data-lucide="plus" class="h-3.5 w-3.5"></i>
+                  {addableArrays[sg.arrayPath]}
+                </button>
+              ) : null}
+            </Fragment>
+          ))}
+        </div>
+      ))}
+    </div>
+  </form>
+
+  <footer class="flex items-center gap-2 border-t border-[var(--personal-border)] px-5 py-4">
+    <button
+      type="button"
+      id="edit-panel-save"
+      class="flex h-10 flex-1 items-center justify-center gap-1.5 rounded-md bg-[var(--personal-primary)] text-[var(--personal-primary-foreground)] transition-colors hover:bg-[var(--personal-primary-700)]"
+      style="font-size:var(--personal-font-size-body);font-weight:var(--personal-font-weight-h3)"
+    >
+      <i data-lucide="check" class="h-4 w-4"></i>
+      保存并应用
+    </button>
+    <button
+      type="button"
+      id="edit-panel-persist"
+      aria-label="固化到 config.yaml"
+      title="固化到 config.yaml（dev only）"
+      class="flex h-10 w-10 items-center justify-center rounded-md border border-[var(--personal-border)] text-[var(--personal-muted-foreground)] transition-colors hover:border-[var(--personal-primary)] hover:text-[var(--personal-primary)]"
+    >
+      <i data-lucide="save" class="h-4 w-4"></i>
+    </button>
+  </footer>
+</aside>
+
+<!-- 浮动提示：保存成功后短暂显示 -->
+<div
+  id="edit-panel-toast"
+  class="pointer-events-none fixed bottom-6 left-1/2 z-[60] -translate-x-1/2 translate-y-4 rounded-full bg-[var(--personal-foreground)] px-4 py-2 text-[var(--personal-background)] opacity-0 transition-all duration-300"
+  style="font-size:var(--personal-font-size-caption)"
+>
+  已保存
+</div>
+
+<script>
+  import { createIcons, icons } from 'lucide';
+  import { THEME_PRESETS } from '../data/theme-presets';
+
+  // 编辑面板交互逻辑：打开/关闭、填充表单、保存、固化、增删项
+  // cfg 存文本/图片覆盖，theme 单独存储避免与 cfg-apply 冲突（theme-apply 独立处理）
+  const STORAGE_KEY = 'site-cfg-overrides';
+  const THEME_KEY = 'site-theme-overrides';
+
+  const trigger = document.getElementById('edit-panel-trigger');
+  const panel = document.getElementById('edit-panel');
+  const overlay = document.getElementById('edit-panel-overlay');
+  const closeBtn = document.getElementById('edit-panel-close');
+  const form = document.getElementById('edit-panel-form') as HTMLFormElement | null;
+  const saveBtn = document.getElementById('edit-panel-save');
+  const persistBtn = document.getElementById('edit-panel-persist');
+  const toast = document.getElementById('edit-panel-toast');
+
+  /** 转义字符串用于构建正则表达式，避免路径中的特殊字符干扰匹配 */
+  function escapeRegExp(s: string): string {
+    return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  /** 读取 localStorage 中的覆盖对象（合并 cfg + theme 两个存储键），失败时返回空对象 */
+  function readOverrides(): Record<string, string> {
+    var merged: Record<string, string> = {};
+    try {
+      var rawCfg = localStorage.getItem(STORAGE_KEY);
+      if (rawCfg) Object.assign(merged, JSON.parse(rawCfg));
+    } catch { /* ignore */ }
+    try {
+      var rawTheme = localStorage.getItem(THEME_KEY);
+      if (rawTheme) Object.assign(merged, JSON.parse(rawTheme));
+    } catch { /* ignore */ }
+    return merged;
+  }
+
+  /** 打开面板：用当前覆盖值填充表单，未覆盖字段填默认值 */
+  function openPanel() {
+    if (!panel || !overlay || !form) return;
+    const overrides = readOverrides();
+    form.querySelectorAll<HTMLElement>('[data-cfg-field]').forEach(el => {
+      const path = el.getAttribute('data-cfg-field') || '';
+      const defaultVal = el.getAttribute('data-cfg-default') || '';
+      const value = Object.prototype.hasOwnProperty.call(overrides, path)
+        ? overrides[path]
+        : defaultVal;
+      if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+        el.value = value;
+      }
+      // 图片字段：同步预览图，有值显示 img，空值回退到占位图标
+      if (el.hasAttribute('data-cfg-image-input')) {
+        const container = el.closest('div.flex.items-center');
+        if (container) updateImagePreview(container, value);
+      }
+    });
+    panel.classList.remove('translate-x-full');
+    panel.setAttribute('aria-hidden', 'false');
+    overlay.classList.remove('hidden');
+  }
+
+  /** 关闭面板 */
+  function closePanel() {
+    if (!panel || !overlay) return;
+    panel.classList.add('translate-x-full');
+    panel.setAttribute('aria-hidden', 'true');
+    overlay.classList.add('hidden');
+  }
+
+  /**
+   * 收集表单当前值，按路径前缀拆分为 cfg 和 theme 两份
+   * 动态新增的字段（data-cfg-dynamic）总是收集，即使值为空，
+   * 这样保存后 applyCfgOverrides 能正确隐藏空字段；
+   * SSG 字段仅收集与默认值不同的，减少 localStorage 体积
+   * color 字段因有 color input + text input 两个元素同 path，去重处理
+   */
+  function collectOverrides(): { cfg: Record<string, string>; theme: Record<string, string> } {
+    const cfg: Record<string, string> = {};
+    const theme: Record<string, string> = {};
+    if (!form) return { cfg, theme };
+    const seen = new Set<string>();
+    form.querySelectorAll<HTMLElement>('[data-cfg-field]').forEach(el => {
+      const path = el.getAttribute('data-cfg-field') || '';
+      // color input 和 text input 同 path，只取第一个（color input 优先）
+      if (seen.has(path)) return;
+      const defaultVal = el.getAttribute('data-cfg-default') || '';
+      if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+        const isDynamic = el.hasAttribute('data-cfg-dynamic');
+        if (isDynamic || el.value !== defaultVal) {
+          if (path.startsWith('theme.')) {
+            theme[path] = el.value;
+          } else {
+            cfg[path] = el.value;
+          }
+          seen.add(path);
+        }
+      }
+    });
+    return { cfg, theme };
+  }
+
+  /** 短暂显示「已保存」提示 */
+  function showToast() {
+    if (!toast) return;
+    toast.classList.remove('opacity-0', 'translate-y-4');
+    setTimeout(() => {
+      toast.classList.add('opacity-0', 'translate-y-4');
+    }, 1500);
+  }
+
+  /** 更新图片预览：有 src 显示 img，空值回退到占位图标 */
+  function updateImagePreview(container: HTMLElement, src: string) {
+    const preview = container.querySelector('[data-cfg-preview]') as HTMLImageElement | null;
+    const placeholder = container.querySelector('[data-cfg-preview-placeholder]');
+    if (preview) {
+      preview.src = src;
+      preview.classList.toggle('hidden', !src);
+    }
+    if (placeholder) {
+      placeholder.classList.toggle('hidden', !!src);
+    }
+  }
+
+  /** 把 File 读成 base64 字符串（去掉 data: 前缀，供服务端写入二进制文件） */
+  function fileToBase64(file: File): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        resolve(result.split(',')[1] || '');
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  /**
+   * 添加新数组项：克隆页面最后一个卡片 DOM + 面板内对应子组
+   * 新元素标记 data-cfg-dynamic，cfg-apply 中不在覆盖表时保持 hidden
+   */
+  function addItem(arrayPath: string) {
+    // 1. 克隆页面 DOM
+    const container = document.querySelector(`[data-cfg-list="${arrayPath}"]`);
+    if (!container) return;
+
+    // 找最后一个带 data-cfg 的直接子元素（跳过分隔符等装饰元素）
+    const children = Array.from(container.children);
+    let lastItem: Element | null = null;
+    for (let i = children.length - 1; i >= 0; i--) {
+      if (children[i].querySelector('[data-cfg]') || children[i].hasAttribute('data-cfg')) {
+        lastItem = children[i];
+        break;
+      }
+    }
+    if (!lastItem) return;
+
+    // 计算新索引：扫描容器内所有 data-cfg，找最大数字索引 + 1
+    const pathRegex = new RegExp('^' + escapeRegExp(arrayPath) + '\\.(\\d+)');
+    let maxIndex = -1;
+    container.querySelectorAll('[data-cfg]').forEach(el => {
+      const p = el.getAttribute('data-cfg') || '';
+      const match = p.match(pathRegex);
+      if (match) {
+        const idx = parseInt(match[1], 10);
+        if (idx > maxIndex) maxIndex = idx;
+      }
+    });
+    const newIndex = maxIndex + 1;
+
+    // 克隆最后一个子元素
+    const clone = lastItem.cloneNode(true) as HTMLElement;
+
+    // 更新克隆内所有 data-cfg 的 path，清空文本，标记为动态新增并隐藏
+    clone.querySelectorAll('[data-cfg]').forEach(el => {
+      const oldPath = el.getAttribute('data-cfg') || '';
+      const newPath = oldPath.replace(pathRegex, `${arrayPath}.${newIndex}`);
+      el.setAttribute('data-cfg', newPath);
+      el.textContent = '';
+      el.setAttribute('data-cfg-dynamic', '');
+      el.setAttribute('hidden', '');
+    });
+
+    // 更新 data-cfg-row-prefix 以保持标识一致
+    clone.querySelectorAll('[data-cfg-row-prefix]').forEach(el => {
+      const oldPrefix = el.getAttribute('data-cfg-row-prefix') || '';
+      const newPrefix = oldPrefix.replace(pathRegex, `${arrayPath}.${newIndex}`);
+      el.setAttribute('data-cfg-row-prefix', newPrefix);
+    });
+
+    // row 级联隐藏：新卡片所有字段为空，整张卡片应隐藏
+    clone.querySelectorAll('[data-cfg-row]').forEach(el => {
+      el.setAttribute('hidden', '');
+    });
+
+    // hero.stats 有前置分隔符，克隆时需额外插入一个
+    if (arrayPath === 'hero.stats') {
+      const divider = document.createElement('div');
+      divider.className = 'h-10 w-px bg-[var(--personal-border)]';
+      container.appendChild(divider);
+    }
+
+    container.appendChild(clone);
+
+    // 重新渲染 lucide 图标（克隆的 <i> 可能未被 lucide 处理）
+    createIcons({ icons });
+
+    // 2. 克隆面板内该数组的子组
+    addPanelSubGroup(arrayPath, newIndex);
+  }
+
+  /**
+   * 在面板内克隆指定数组最后一个子组，更新 path、序号、删除按钮
+   * 新子组插入到对应的添加按钮之前
+   */
+  function addPanelSubGroup(arrayPath: string, newIndex: number) {
+    const pathRegex = new RegExp('^' + escapeRegExp(arrayPath) + '\\.\\d+$');
+    const allSubgroups = Array.from(document.querySelectorAll<HTMLElement>('[data-cfg-subgroup]'));
+    const arraySubgroups = allSubgroups.filter(el => pathRegex.test(el.getAttribute('data-cfg-subgroup') || ''));
+    if (arraySubgroups.length === 0) return;
+
+    // 找最大索引的子组作为模板
+    let maxIndex = -1;
+    let template: HTMLElement | null = null;
+    for (const el of arraySubgroups) {
+      const match = (el.getAttribute('data-cfg-subgroup') || '').match(pathRegex);
+      if (match) {
+        const idx = parseInt(match[0].split('.').pop()!, 10);
+        if (idx > maxIndex) {
+          maxIndex = idx;
+          template = el;
+        }
+      }
+    }
+    if (!template) return;
+
+    const clone = template.cloneNode(true) as HTMLElement;
+    clone.setAttribute('data-cfg-subgroup', `${arrayPath}.${newIndex}`);
+
+    // 更新删除按钮的 data-cfg-delete
+    const delBtn = clone.querySelector('[data-cfg-delete]');
+    if (delBtn) delBtn.setAttribute('data-cfg-delete', `${arrayPath}.${newIndex}`);
+
+    // 更新序号显示
+    const numSpan = clone.querySelector('span');
+    if (numSpan) numSpan.textContent = `#${newIndex + 1}`;
+
+    // 更新所有字段的 path 和默认值
+    const fieldPathRegex = new RegExp('^' + escapeRegExp(arrayPath) + '\\.\\d+');
+    clone.querySelectorAll('[data-cfg-field]').forEach(input => {
+      if (input instanceof HTMLInputElement || input instanceof HTMLTextAreaElement) {
+        const oldPath = input.getAttribute('data-cfg-field') || '';
+        const newPath = oldPath.replace(fieldPathRegex, `${arrayPath}.${newIndex}`);
+        input.setAttribute('data-cfg-field', newPath);
+        input.setAttribute('data-cfg-default', '');
+        input.setAttribute('data-cfg-dynamic', '');
+        input.value = '';
+      }
+    });
+
+    // 插入到添加按钮前（模板的下一个兄弟是添加按钮或另一个子组）
+    const addButton = template.nextElementSibling;
+    const parent = template.parentNode;
+    if (parent) {
+      if (addButton && addButton.hasAttribute('data-cfg-add')) {
+        parent.insertBefore(clone, addButton);
+      } else {
+        parent.appendChild(clone);
+      }
+    }
+  }
+
+  /**
+   * 删除数组项：动态项清 localStorage + 移除 DOM；yaml 项调 API 删 yaml
+   * 删除 yaml 项后索引自动重排，清空全部 localStorage 覆盖避免错位
+   */
+  async function deleteItem(arrayPath: string, index: number) {
+    if (!confirm(`确定删除 ${arrayPath} #${index + 1}？`)) return;
+
+    const container = document.querySelector(`[data-cfg-list="${arrayPath}"]`);
+    if (!container) return;
+
+    const leafPath = `${arrayPath}.${index}`;
+    const pathPrefix = `${leafPath}.`;
+
+    // 找页面对应卡片：遍历容器子元素，匹配 data-cfg 路径
+    let targetItem: Element | null = null;
+    for (const child of Array.from(container.children)) {
+      const cfgs = child.querySelectorAll('[data-cfg]');
+      for (const cfg of Array.from(cfgs)) {
+        const p = cfg.getAttribute('data-cfg') || '';
+        if (p === leafPath || p.startsWith(pathPrefix)) {
+          targetItem = child;
+          break;
+        }
+      }
+      if (child.hasAttribute('data-cfg') && child.getAttribute('data-cfg') === leafPath) {
+        targetItem = child;
+        break;
+      }
+      if (targetItem) break;
+    }
+
+    // 判断是否动态新增项（未固化到 yaml，只在 localStorage 中）
+    const isDynamic = !!targetItem && (
+      !!targetItem.querySelector('[data-cfg-dynamic]') ||
+      targetItem.hasAttribute('data-cfg-dynamic')
+    );
+
+    if (isDynamic) {
+      // 动态项：清除 localStorage 对应 key + 移除面板子组 + 移除页面 DOM
+      const overrides = readOverrides();
+      for (const key of Object.keys(overrides)) {
+        if (key === leafPath || key.startsWith(pathPrefix)) {
+          delete overrides[key];
+        }
+      }
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(overrides));
+
+      form?.querySelector(`[data-cfg-subgroup="${leafPath}"]`)?.remove();
+      targetItem?.remove();
+      showToast();
+    } else {
+      // yaml 项：删除前检查是否有未固化的文本修改
+      // 索引重排会使旧 key 失效，theme 路径不含数组索引不受影响
+      const overrides = readOverrides();
+      const hasCfgOverrides = Object.keys(overrides).some(
+        k => !k.startsWith('theme.') && overrides[k] !== ''
+      );
+      if (hasCfgOverrides) {
+        if (!confirm('删除此项会导致数组索引重排，未保存的文本修改将丢失（主题颜色不受影响）。继续？')) return;
+      }
+
+      // yaml 项：POST 到 dev server 删除，deleteIn 自动收缩数组
+      try {
+        const res = await fetch('/__delete_cfg_item', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ arrayPath, index }),
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || `HTTP ${res.status}`);
+        }
+        // 索引重排后 localStorage 中旧 key 失效，整体清除
+        localStorage.removeItem(STORAGE_KEY);
+        showToast();
+        // Vite 监听到 config.yaml 变化自动 HMR 刷新
+      } catch (err: any) {
+        alert('删除失败：' + (err?.message || err));
+      }
+    }
+  }
+
+  trigger?.addEventListener('click', openPanel);
+  closeBtn?.addEventListener('click', closePanel);
+  overlay?.addEventListener('click', closePanel);
+
+  // ESC 键关闭面板
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && panel && !panel.classList.contains('translate-x-full')) {
+      closePanel();
+    }
+  });
+
+  // 表单内点击事件委托：区分添加按钮和删除按钮
+  form?.addEventListener('click', e => {
+    const target = e.target as HTMLElement;
+
+    // 添加按钮
+    const addBtn = target.closest('[data-cfg-add]') as HTMLElement | null;
+    if (addBtn) {
+      const arrayPath = addBtn.getAttribute('data-cfg-add');
+      if (arrayPath) addItem(arrayPath);
+      return;
+    }
+
+    // 删除按钮：data-cfg-delete 格式为 "arrayPath.index"（如 "projects.0" 或 "hero.skills.2"）
+    const delBtn = target.closest('[data-cfg-delete]') as HTMLElement | null;
+    if (delBtn) {
+      const rawPath = delBtn.getAttribute('data-cfg-delete') || '';
+      // 最后一个点分隔 arrayPath 和 index（arrayPath 本身可能含点，如 hero.skills）
+      const lastDot = rawPath.lastIndexOf('.');
+      const arrayPath = rawPath.substring(0, lastDot);
+      const index = parseInt(rawPath.substring(lastDot + 1), 10);
+      if (arrayPath && !isNaN(index)) {
+        deleteItem(arrayPath, index);
+      }
+    }
+  });
+
+  // 文件选择后上传到 dev server，拿到路径回填隐藏 input + 更新预览
+  form?.addEventListener('change', async e => {
+    const target = e.target as HTMLElement;
+    if (!(target instanceof HTMLInputElement) || !target.hasAttribute('data-cfg-upload')) return;
+
+    const file = target.files?.[0];
+    if (!file) return;
+
+    const container = target.closest('div.flex.items-center');
+    if (!container) return;
+    const hiddenInput = container.querySelector('[data-cfg-image-input]') as HTMLInputElement | null;
+    if (!hiddenInput) return;
+
+    try {
+      const base64 = await fileToBase64(file);
+      const ext = file.name.split('.').pop() || 'png';
+      const res = await fetch('/__upload_image', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ base64, ext }),
+      });
+      const data = await res.json();
+      if (!data.ok) throw new Error(data.error || 'Upload failed');
+      hiddenInput.value = data.path;
+      updateImagePreview(container, data.path);
+      showToast();
+    } catch (err: any) {
+      alert('图片上传失败：' + (err?.message || err));
+    }
+  });
+
+  saveBtn?.addEventListener('click', () => {
+    const { cfg, theme } = collectOverrides();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cfg));
+    localStorage.setItem(THEME_KEY, JSON.stringify(theme));
+    if (typeof (window as any).applyCfgOverrides === 'function') {
+      (window as any).applyCfgOverrides();
+    }
+    if (typeof (window as any).applyThemeOverrides === 'function') {
+      (window as any).applyThemeOverrides();
+    }
+    showToast();
+  });
+
+  // 固化按钮：把当前覆盖 POST 到 dev server 中间件，写回 config.yaml
+  persistBtn?.addEventListener('click', async () => {
+    const { cfg, theme } = collectOverrides();
+
+    // 检查动态新增项：部分填写会导致 yaml 中该项字段不完整，渲染时出现 undefined
+    // 阻止固化并定位到第一个空字段，引导用户填写完整或删除该项
+    let firstEmptyDynamic: HTMLElement | null = null;
+    form?.querySelectorAll<HTMLElement>('[data-cfg-dynamic]').forEach(el => {
+      if (firstEmptyDynamic) return;
+      if (el instanceof HTMLInputElement || el instanceof HTMLTextAreaElement) {
+        if (el.value.trim() === '') firstEmptyDynamic = el;
+      }
+    });
+    if (firstEmptyDynamic) {
+      alert('新增项有字段为空，请填写完整或删除该项后再固化。');
+      firstEmptyDynamic.focus();
+      return;
+    }
+
+    // 合并两份覆盖，过滤空值：避免 yaml 中写入空字符串导致生产环境显示空框
+    const merged: Record<string, string> = {};
+    for (const [k, v] of Object.entries(cfg)) if (v !== '') merged[k] = v;
+    for (const [k, v] of Object.entries(theme)) if (v !== '') merged[k] = v;
+    try {
+      const res = await fetch('/__save_cfg', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(merged),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+      localStorage.removeItem(STORAGE_KEY);
+      localStorage.removeItem(THEME_KEY);
+      // HMR 会触发整页刷新，toast 会被刷新吞掉
+      // 用 sessionStorage 标记，刷新后重新显示反馈
+      sessionStorage.setItem('cfg-persisted', '1');
+      showToast();
+    } catch (err: any) {
+      alert('写入 config.yaml 失败：' + (err?.message || err));
+    }
+  });
+
+  // 预设色板点击：把整套 light+dark 覆盖写入对应字段并刷新预览
+  form?.addEventListener('click', e => {
+    const target = e.target as HTMLElement;
+    const btn = target.closest('[data-cfg-preset]') as HTMLElement | null;
+    if (!btn) return;
+    const name = btn.getAttribute('data-cfg-preset') || '';
+    const preset = THEME_PRESETS.find(p => p.name === name);
+    if (!preset) return;
+    // 遍历所有 color 字段，按路径匹配预设值并填充
+    form.querySelectorAll<HTMLElement>('[data-cfg-field]').forEach(el => {
+      const path = el.getAttribute('data-cfg-field') || '';
+      const match = path.match(/^theme\.(light|dark)\.(\w+)$/);
+      if (!match) return;
+      const [, mode, key] = match;
+      const val = (preset as any)[mode]?.[key];
+      if (!val) return;
+      if (el instanceof HTMLInputElement) {
+        el.value = val;
+        // 触发 change 事件让 color/text 联动更新
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    });
+    // 同步预览到页面
+    const { theme } = collectOverrides();
+    localStorage.setItem(THEME_KEY, JSON.stringify(theme));
+    if (typeof (window as any).applyThemeOverrides === 'function') {
+      (window as any).applyThemeOverrides();
+    }
+    showToast();
+  });
+
+  // color input 和 text input 联动：任一方改变同步另一方
+  form?.addEventListener('input', e => {
+    const target = e.target as HTMLElement;
+    if (!(target instanceof HTMLInputElement)) return;
+    const path = target.getAttribute('data-cfg-field') || '';
+    if (!path.startsWith('theme.')) return;
+    const container = target.closest('div.flex.items-center');
+    if (!container) return;
+    // 找到同组内的另一个 input 同步值
+    const isColorPicker = target.type === 'color';
+    const other = container.querySelector(isColorPicker ? 'input[type="text"]' : 'input[type="color"]') as HTMLInputElement | null;
+    if (other) other.value = target.value;
+  });
+
+  // 固化后 HMR 刷新页面，检查 sessionStorage 标记并显示成功反馈
+  if (sessionStorage.getItem('cfg-persisted') === '1') {
+    sessionStorage.removeItem('cfg-persisted');
+    setTimeout(() => showToast(), 200);
+  }
+</script>

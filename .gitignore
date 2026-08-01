@@ -1,0 +1,42 @@
+# build output
+dist/
+.astro/
+
+# dependencies
+node_modules/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+
+# environment variables
+.env
+.env.*
+!.env.example
+
+# local overrides
+*.local
+
+# macOS-specific files
+.DS_Store
+
+# IDE settings
+.idea/
+.vscode/
+
+# Windows-specific files
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# 运行时生成的上传图片（dev 面板上传产生，默认不入库；如需入库可移除下行）
+public/photos/
+
+# 编辑面板导出的本地覆盖配置（不应入库，仅用于回写 config.yaml 后丢弃）
+site-cfg-overrides.json
+
+# AI 协作内部文档（不随仓库公开）
+agent.md

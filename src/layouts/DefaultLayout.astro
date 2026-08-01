@@ -1,0 +1,66 @@
+---
+import Header from '../components/Header.astro';
+import Footer from '../components/Footer.astro';
+import EditPanel from '../components/EditPanel.astro';
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+}
+
+import { siteConfig } from '../data/config';
+
+// 默认值取自集中配置，调用方仍可通过 props 覆盖
+const { title = siteConfig.site.title, description = siteConfig.site.description } = Astro.props;
+
+// 主题数据：SSG 时序列化为 JSON 注入页面，供 theme-apply.js 作为 base 合并覆盖
+const themeInit = siteConfig.theme ?? null;
+---
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{title}</title>
+  <meta name="description" content={description} />
+  <!-- 主题初始化：尽早同步执行，避免明暗切换时闪烁（FOUC） -->
+  <script is:inline>
+    (function () {
+      var saved = localStorage.getItem('theme');
+      var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+      var isDark = saved === 'dark' || (!saved && prefersDark);
+      if (isDark) document.documentElement.classList.add('dark');
+    })();
+  </script>
+  <!-- 主题初始数据：SSG 注入，theme-apply.js 读取后合并 localStorage 覆盖 -->
+  {themeInit && (
+    <script id="theme-init" type="application/json" set:html={JSON.stringify(themeInit)} />
+  )}
+  <!-- 色阶派生 + 主题应用：同步加载，在 head 中尽早执行避免 FOUC -->
+  <!-- 生产环境也需从 config.yaml 应用主题；dev 期额外读 localStorage 覆盖 -->
+  <script is:inline src="/scripts/theme-derive.js"></script>
+  <script is:inline src="/scripts/theme-apply.js"></script>
+  <!-- 配置覆盖：dev 期同步加载，DOMContentLoaded 后立即应用 localStorage 中的本地覆盖，避免文本闪烁 -->
+  <!-- 生产环境无编辑面板，不会产生 localStorage 覆盖，此脚本不加载以减少产物体积 -->
+  {import.meta.env.DEV && <script is:inline src="/scripts/cfg-apply.js"></script>}
+</head>
+<body class="min-h-screen font-sans antialiased">
+  <Header />
+  <main>
+    <slot />
+  </main>
+  <Footer />
+  {/* 编辑面板仅在 dev 模式渲染，生产构建不输出任何 HTML，普通访客不可见 */}
+  {import.meta.env.DEV && <EditPanel />}
+
+  <!-- Lucide 图标渲染：需显式传入 icons 对象，否则 createIcons 找不到图标定义 -->
+  <script>
+    import { createIcons, icons } from 'lucide';
+    createIcons({ icons });
+  </script>
+  <!-- 悬浮导航滚动状态：监听滚动切换导航透明度与阴影 -->
+  <script is:inline src="/scripts/nav-scroll.js" defer></script>
+</body>
+</html>
