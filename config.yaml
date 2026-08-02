@@ -10,7 +10,7 @@
 site:
   title: 个人主页
   description: 一名热爱书写与创造的前端工程师，用代码与文字记录生活的温度。
-  author: 你的名字
+  author: Limbo
   favicon: /favicon.png
 
 # --- 顶部导航菜单：新增页面时在此追加 ---
@@ -26,27 +26,24 @@ nav:
 
 # --- 首屏 Hero 区 ---
 hero:
-  badgeText: VibeCoding
-  title: 你的名字
+  badgeText: VibeCoding ~
+  title: Limbo
   subtitle: 前景可待 · 未来可期
   # 首屏左侧照片路径，留空则显示 user 图标占位；上传后会写入 /photos/ 目录
-  image: ''
-  description: 一名热爱书写与创造的前端工程师，用代码与文字记录生活的温度。
+  image: '/photos/photo-1785601536511.jpg'
+  description: VibeCoding爱好者
   skills:
     - Vue.js
     - TypeScript
     - Go
-    - Python
     - Git
     - Docker
-    - Linux
-    - 设计
   stats:
-    - value: '4'
+    - value: '1'
       label: 精选项目
-    - value: '3'
+    - value: '0'
       label: 上线网站
-    - value: '49'
+    - value: '0'
       label: 发布文章
   # 社交链接：品牌图标 lucide 已移除，GitHub/LinkedIn 用内联 SVG path；
   # 通用图标走 lucide 名称（icon 字段）
@@ -96,27 +93,13 @@ projects:
     stars: 860
     year: '2025'
     license: Apache-2.0
-  - title: 项目三
-    desc: 为开发者设计的命令行效率工具，聚合常用操作，减少重复劳动。
-    lang: Python
-    stars: 2.4k
-    year: '2024'
-    license: MIT
 
 # --- 上线网站 ---
 sites:
-  - icon: book-open
-    tag: 文档
-    title: 站点一
-    desc: 沉淀技术实践与踩坑记录，持续更新的个人文档站。
   - icon: feather
     tag: 博客
     title: 站点二
     desc: 记录生活与思考的独立博客，以文字丈量时间。
-  - icon: activity
-    tag: 监控
-    title: 站点三
-    desc: 面向个人项目的轻量监控面板，服务状态一目了然。
   - icon: box
     tag: 开源
     title: 站点四
@@ -134,11 +117,6 @@ articles:
     title: 文章二
     desc: 从零开始搭建个人博客的完整记录，包含选型、部署与优化的经验。
     date: '2026-06-12'
-  - icon: lightbulb
-    category: 设计手记
-    title: 文章三
-    desc: 关于配色与排版的思考：如何在个人主页中保持克制的设计语言。
-    date: '2026-05-30'
 
 # --- 页脚 ---
 footer:
@@ -152,16 +130,16 @@ footer:
 # 修改后通过编辑面板「保存并应用」预览，或「固化」写回此文件
 theme:
   light:
-    background: '#faf8f5'   # 暖纸色页面底色
-    foreground: '#26221d'   # 暖棕黑正文
-    card: '#ffffff'         # 卡片表面
-    border: '#e4ded4'       # 描边
-    primary: '#1a8c8c'      # 青绿主色
-    accent: '#b0631b'       # 暖橙点缀
+    background: '#ffffff' # 暖纸色页面底色
+    foreground: '#26221d' # 暖棕黑正文
+    card: '#ffffff' # 卡片表面
+    border: '#e4ded4' # 描边
+    primary: '#198686' # 青绿主色
+    accent: '#b0631b' # 暖橙点缀
   dark:
-    background: '#1a1714'   # 暖黑底色
-    foreground: '#f2eee8'   # 暖白正文
-    card: '#26221d'         # 卡片表面
-    border: '#3a352e'       # 描边
-    primary: '#4cbfbd'      # 提亮青绿
-    accent: '#e29744'       # 提亮暖橙
+    background: '#000000' # 暖黑底色
+    foreground: '#f2eee8' # 暖白正文
+    card: '#26221d' # 卡片表面
+    border: '#000000' # 描边
+    primary: '#4cbfbd' # 提亮青绿
+    accent: '#a69c91' # 提亮暖橙
