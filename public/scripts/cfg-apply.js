@@ -68,6 +68,31 @@
       }
     }
 
+    // 项目卡片 url 覆盖：url 控制 <a> 的 href 与外链图标，无法用 textContent 替换，需单独处理
+    // 有值则设 href 让卡片可点击跳转并显示外链图标，空值则移除 href 让卡片不可点击并隐藏图标
+    var cards = document.querySelectorAll('[data-cfg-card]');
+    for (var c = 0; c < cards.length; c++) {
+      var card = cards[c];
+      var cardPath = card.getAttribute('data-cfg-card');
+      if (!cardPath) continue;
+      var urlKey = cardPath + '.url';
+      if (Object.prototype.hasOwnProperty.call(overrides, urlKey)) {
+        var urlVal = overrides[urlKey];
+        var linkIcon = card.querySelector('[data-cfg-link-icon]');
+        if (urlVal) {
+          card.setAttribute('href', urlVal);
+          card.setAttribute('target', '_blank');
+          card.setAttribute('rel', 'noopener noreferrer');
+          if (linkIcon) linkIcon.classList.remove('hidden');
+        } else {
+          card.removeAttribute('href');
+          card.removeAttribute('target');
+          card.removeAttribute('rel');
+          if (linkIcon) linkIcon.classList.add('hidden');
+        }
+      }
+    }
+
     // 级联隐藏：检查所有 data-cfg-row 容器，若其内部所有 data-cfg 元素都已 hidden，
     // 则隐藏整个 row（如清空项目所有字段后整张卡片消失，清空 lang 后图标+文本整行消失）
     var rows = document.querySelectorAll('[data-cfg-row]');

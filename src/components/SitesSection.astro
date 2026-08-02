@@ -10,17 +10,17 @@ const { sites } = siteConfig;
     <h2 class="text-center" style="font-size:var(--personal-font-size-h2);font-weight:var(--personal-font-weight-h2);line-height:var(--personal-line-height-h2)">上线网站</h2>
     <p class="mt-3 text-center text-[var(--personal-muted-foreground)]" style="font-size:var(--personal-font-size-body);line-height:var(--personal-line-height-body)">一些正在运行与持续维护的线上角落</p>
 
-    <div class="mt-12 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4" data-cfg-list="sites">
+    <div class="mt-12 grid grid-cols-1 gap-6 md:grid-cols-3" data-cfg-list="sites">
       {sites.map((site, i) => (
-        <article class="rounded-md border border-[var(--personal-border)] bg-[var(--personal-card)] p-5 shadow-[var(--personal-shadow-card)] transition-[border-color,box-shadow] hover:border-[var(--personal-primary)] hover:shadow-[var(--personal-shadow-card-hover)]" data-cfg-row data-cfg-row-prefix={`sites.${i}`}>
+        <article class="rounded-xl border border-[var(--personal-border)] bg-[var(--personal-card)] p-5 transition-colors hover:border-[var(--personal-primary)]" data-cfg-row data-cfg-row-prefix={`sites.${i}`}>
           <div class="flex items-center justify-between">
             <div class="flex h-10 w-10 items-center justify-center rounded-md bg-[var(--personal-primary-50)] text-[var(--personal-primary-600)]">
               <i data-lucide={site.icon} class="h-5 w-5"></i>
             </div>
             <span class="rounded-full bg-[var(--personal-muted)] px-2.5 py-0.5 text-[var(--personal-muted-foreground)]" style="font-size:var(--personal-font-size-caption)" data-cfg={`sites.${i}.tag`}>{site.tag}</span>
           </div>
-          <h3 class="mt-4" style="font-size:var(--personal-font-size-h3);font-weight:var(--personal-font-weight-h3);line-height:var(--personal-line-height-h3)" data-cfg={`sites.${i}.title`}>{site.title}</h3>
-          <p class="mt-2 text-[var(--personal-muted-foreground)]" style="font-size:var(--personal-font-size-body);line-height:var(--personal-line-height-body)" data-cfg={`sites.${i}.desc`}>{site.desc}</p>
+          <h3 class="mt-4 text-[var(--personal-foreground)]" style="font-size:var(--personal-font-size-h4);font-weight:var(--personal-font-weight-h3);line-height:var(--personal-line-height-h3)" data-cfg={`sites.${i}.title`}>{site.title}</h3>
+          <p class="mt-2 text-[var(--personal-muted-foreground)]" style="font-size:var(--personal-font-size-mono);line-height:var(--personal-line-height-body)" data-cfg={`sites.${i}.desc`}>{site.desc}</p>
         </article>
       ))}
     </div>

@@ -57,6 +57,7 @@ const fields: EditField[] = [
     { path: `projects.${i}.stars`, label: `Star`, type: 'text', default: p.stars, group: '精选项目', arrayPath: 'projects', arrayIndex: i },
     { path: `projects.${i}.year`, label: `年份`, type: 'text', default: p.year, group: '精选项目', arrayPath: 'projects', arrayIndex: i },
     { path: `projects.${i}.license`, label: `协议`, type: 'text', default: p.license, group: '精选项目', arrayPath: 'projects', arrayIndex: i },
+    { path: `projects.${i}.url`, label: `链接`, type: 'text', default: p.url ?? '', group: '精选项目', arrayPath: 'projects', arrayIndex: i },
   ]),
 
   // 上线网站
@@ -81,6 +82,7 @@ const fields: EditField[] = [
   { path: 'theme.light.border', label: '描边色', type: 'color', default: siteConfig.theme?.light.border ?? '#e4ded4', group: '配色 · 亮色' },
   { path: 'theme.light.primary', label: '主色', type: 'color', default: siteConfig.theme?.light.primary ?? '#1a8c8c', group: '配色 · 亮色' },
   { path: 'theme.light.accent', label: '点缀色', type: 'color', default: siteConfig.theme?.light.accent ?? '#b0631b', group: '配色 · 亮色' },
+  { path: 'theme.light.grid', label: '网格色', type: 'color', default: siteConfig.theme?.light.grid ?? '#e4ded4', group: '配色 · 亮色' },
 
   // 主题配色 - 暗色
   { path: 'theme.dark.background', label: '页面底色', type: 'color', default: siteConfig.theme?.dark.background ?? '#1a1714', group: '配色 · 暗色' },
@@ -89,6 +91,7 @@ const fields: EditField[] = [
   { path: 'theme.dark.border', label: '描边色', type: 'color', default: siteConfig.theme?.dark.border ?? '#3a352e', group: '配色 · 暗色' },
   { path: 'theme.dark.primary', label: '主色', type: 'color', default: siteConfig.theme?.dark.primary ?? '#4cbfbd', group: '配色 · 暗色' },
   { path: 'theme.dark.accent', label: '点缀色', type: 'color', default: siteConfig.theme?.dark.accent ?? '#e29744', group: '配色 · 暗色' },
+  { path: 'theme.dark.grid', label: '网格色', type: 'color', default: siteConfig.theme?.dark.grid ?? '#3a352e', group: '配色 · 暗色' },
 ];
 
 /**
@@ -261,20 +264,27 @@ function fieldGroupsForRender() {
                     <div class="flex flex-col gap-1.5">
                       <span class="text-[var(--personal-foreground)]" style="font-size:var(--personal-font-size-caption)">{f.label}</span>
                       {f.type === 'image' ? (
-                        /* 图片字段：预览方块 + 文件选择 + 隐藏路径 input */
-                        <div class="flex items-center gap-3">
-                          <div class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md border border-[var(--personal-border)] bg-[var(--personal-muted)]">
-                            <img data-cfg-preview="" src={f.default} alt="" class={`h-full w-full object-cover ${f.default ? '' : 'hidden'}`} />
-                            <i data-lucide="image" data-cfg-preview-placeholder="" class={`h-6 w-6 text-[var(--personal-muted-foreground)] ${f.default ? 'hidden' : ''}`}></i>
+                        /* 图片字段：预览方块 + 已有图片下拉选择 + 文件上传 + 隐藏路径 input */
+                        <div class="flex flex-col gap-2">
+                          <div class="flex items-center gap-3">
+                            <div class="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md border border-[var(--personal-border)] bg-[var(--personal-muted)]">
+                              <img data-cfg-preview="" src={f.default} alt="" class={`h-full w-full object-cover ${f.default ? '' : 'hidden'}`} />
+                              <i data-lucide="image" data-cfg-preview-placeholder="" class={`h-6 w-6 text-[var(--personal-muted-foreground)] ${f.default ? 'hidden' : ''}`}></i>
+                            </div>
+                            <div class="flex flex-1 flex-col gap-1.5">
+                              <select data-cfg-photo-select="" class="rounded border border-[var(--personal-border)] bg-[var(--personal-card)] px-2 py-1 text-[var(--personal-foreground)]" style="font-size:var(--personal-font-size-caption)">
+                                <option value="">— 从已有图片选择 —</option>
+                              </select>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                data-cfg-upload=""
+                                class="text-[var(--personal-muted-foreground)] file:mr-2 file:cursor-pointer file:rounded file:border-0 file:bg-[var(--personal-primary)] file:px-2 file:py-1 file:text-[var(--personal-primary-foreground)]"
+                                style="font-size:var(--personal-font-size-caption)"
+                              />
+                            </div>
+                            <input type="hidden" data-cfg-field={f.path} data-cfg-default={f.default} data-cfg-image-input="" value={f.default} />
                           </div>
-                          <input
-                            type="file"
-                            accept="image/*"
-                            data-cfg-upload=""
-                            class="flex-1 text-[var(--personal-muted-foreground)] file:mr-2 file:cursor-pointer file:rounded file:border-0 file:bg-[var(--personal-primary)] file:px-2 file:py-1 file:text-[var(--personal-primary-foreground)]"
-                            style="font-size:var(--personal-font-size-caption)"
-                          />
-                          <input type="hidden" data-cfg-field={f.path} data-cfg-default={f.default} data-cfg-image-input="" value={f.default} />
                         </div>
                       ) : f.type === 'color' ? (
                         /* 颜色字段：色块预览（点击触发原生取色器）+ hex 文本框 */
@@ -426,6 +436,8 @@ function fieldGroupsForRender() {
     panel.classList.remove('translate-x-full');
     panel.setAttribute('aria-hidden', 'false');
     overlay.classList.remove('hidden');
+    // 面板打开时加载已有图片列表
+    refreshPhotoSelects();
   }
 
   /** 关闭面板 */
@@ -538,6 +550,13 @@ function fieldGroupsForRender() {
 
     // 克隆最后一个子元素
     const clone = lastItem.cloneNode(true) as HTMLElement;
+
+    // 新项目默认无 url：移除克隆继承的链接属性，隐藏外链图标，避免空白卡片可点击跳转
+    clone.removeAttribute('href');
+    clone.removeAttribute('target');
+    clone.removeAttribute('rel');
+    var linkIcon = clone.querySelector('[data-cfg-link-icon]');
+    if (linkIcon) linkIcon.classList.add('hidden');
 
     // 更新克隆内所有 data-cfg 的 path，清空文本，标记为动态新增并隐藏
     clone.querySelectorAll('[data-cfg]').forEach(el => {
@@ -782,11 +801,53 @@ function fieldGroupsForRender() {
       if (!data.ok) throw new Error(data.error || 'Upload failed');
       hiddenInput.value = data.path;
       updateImagePreview(container, data.path);
+      // 刷新下拉列表，让新上传的图片也出现在选项中
+      await refreshPhotoSelects();
       showToast();
     } catch (err: any) {
       alert('图片上传失败：' + (err?.message || err));
     }
   });
+
+  // 从已有图片下拉选择后，更新隐藏 input + 预览
+  form?.addEventListener('change', e => {
+    const target = e.target as HTMLElement;
+    if (!(target instanceof HTMLSelectElement) || !target.hasAttribute('data-cfg-photo-select')) return;
+    const selected = target.value;
+    if (!selected) return;
+    const container = target.closest('div.flex.items-center');
+    if (!container) return;
+    const hiddenInput = container.querySelector('[data-cfg-image-input]') as HTMLInputElement | null;
+    if (hiddenInput) hiddenInput.value = selected;
+    updateImagePreview(container, selected);
+  });
+
+  /** 拉取 public/photos/ 中的图片列表，填充到所有图片字段的下拉选择 */
+  async function refreshPhotoSelects() {
+    try {
+      const res = await fetch('/__list_photos');
+      const data = await res.json();
+      if (!data.ok) return;
+      const photos: string[] = data.photos;
+      document.querySelectorAll('select[data-cfg-photo-select]').forEach(sel => {
+        const s = sel as HTMLSelectElement;
+        const current = s.value;
+        // 保留第一个占位 option，其余清除
+        while (s.options.length > 1) s.remove(1);
+        photos.forEach(p => {
+          const opt = document.createElement('option');
+          opt.value = p;
+          opt.textContent = p.split('/').pop() || p;
+          s.appendChild(opt);
+        });
+        // 恢复之前选中的值
+        if (current && photos.includes(current)) s.value = current;
+      });
+    } catch {
+      // dev server 不可用时静默失败
+    }
+  }
+
 
   saveBtn?.addEventListener('click', () => {
     const { cfg, theme } = collectOverrides();

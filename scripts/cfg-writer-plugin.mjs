@@ -55,10 +55,10 @@ const ALLOWED_PATTERNS = [
   /^hero\.primaryAction\.text$/,
   /^hero\.skills\.\d+$/,
   /^hero\.stats\.\d+\.(value|label)$/,
-  /^projects\.\d+\.(title|desc|lang|stars|year|license)$/,
+  /^projects\.\d+\.(title|desc|lang|stars|year|license|url)$/,
   /^sites\.\d+\.(title|desc|tag)$/,
   /^articles\.\d+\.(title|desc|category|date)$/,
-  /^theme\.(light|dark)\.(background|foreground|card|border|primary|accent)$/,
+  /^theme\.(light|dark)\.(background|foreground|card|border|primary|accent|grid)$/,
 ];
 
 function isPathAllowed(flatPath) {
@@ -200,6 +200,31 @@ export function cfgWriterPlugin() {
 
           res.setHeader('Content-Type', 'application/json');
           res.end(JSON.stringify({ ok: true, path: `/photos/${filename}` }));
+        } catch (err) {
+          res.statusCode = 500;
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ ok: false, error: String(err?.message || err) }));
+        }
+      });
+
+      // GET /__list_photos：列出 public/photos/ 中已有的图片文件，供 EditPanel 下拉选择
+      server.middlewares.use('/__list_photos', (req, res) => {
+        if (req.method !== 'GET') {
+          res.statusCode = 405;
+          res.end('Method Not Allowed');
+          return;
+        }
+        try {
+          const dir = path.resolve(process.cwd(), 'public/photos');
+          let files = [];
+          if (fs.existsSync(dir)) {
+            files = fs.readdirSync(dir)
+              .filter(f => /\.(png|jpe?g|webp|gif|svg)$/i.test(f))
+              .map(f => `/photos/${f}`)
+              .reverse(); // 最新的排在前面
+          }
+          res.setHeader('Content-Type', 'application/json');
+          res.end(JSON.stringify({ ok: true, photos: files }));
         } catch (err) {
           res.statusCode = 500;
           res.setHeader('Content-Type', 'application/json');

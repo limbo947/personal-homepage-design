@@ -8,10 +8,7 @@ const { nav: menuItems, site } = siteConfig;
 
 <header class="relative z-50">
   <nav id="site-nav" class="fixed inset-x-4 top-4 z-50 mx-auto flex max-w-6xl items-center justify-between gap-4 rounded-lg border border-[var(--personal-border)] px-5 py-3 backdrop-blur-md site-nav">
-    <a href="#about" class="flex items-center gap-2 transition-colors hover:text-[var(--personal-primary)]" style="font-size:var(--personal-font-size-body);font-weight:var(--personal-font-weight-h3)">
-      <span class="flex h-8 w-8 items-center justify-center rounded-full bg-[var(--personal-primary)] text-[var(--personal-primary-foreground)]">
-        <i data-lucide="code-2" class="h-4 w-4"></i>
-      </span>
+    <a href="#about" class="transition-colors hover:text-[var(--personal-primary)]" style="font-size:var(--personal-font-size-body);font-weight:var(--personal-font-weight-h3)">
       <span data-cfg="site.author">{site.author}</span>
     </a>
     <div class="absolute left-1/2 top-1/2 hidden -translate-x-1/2 -translate-y-1/2 items-center gap-7 md:flex">

@@ -33,6 +33,7 @@
   --personal-muted: #f2eee8;             /* 弱化背景 */
   --personal-muted-foreground: #847a6b;  /* 弱化文字（neutral-500） */
   --personal-border: #e4ded4;            /* 分隔线/描边 */
+  --personal-grid: #e4ded4;              /* Hero 背景网格/点阵色，独立于描边可单独调 */
   --personal-primary: #1a8c8c;           /* 青绿主色 */
   --personal-primary-foreground: #ffffff;
   --personal-accent: #b0631b;            /* 暖橙点缀色 */
@@ -174,6 +175,7 @@ html.dark {
   --personal-muted: #2e2922;
   --personal-muted-foreground: #a89e8e;
   --personal-border: #3a352e;
+  --personal-grid: #3a352e;
   --personal-primary: #4cbfbd;
   --personal-primary-foreground: #1a1714;
   --personal-accent: #e29744;

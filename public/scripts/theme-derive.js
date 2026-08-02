@@ -123,6 +123,7 @@
     set('foreground', palette.foreground);
     set('card', palette.card);
     set('border', palette.border);
+    set('grid', palette.grid);
     set('primary', palette.primary);
     set('primary-foreground', palette.card);
     set('accent', palette.accent);

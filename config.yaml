@@ -27,16 +27,16 @@ nav:
 # --- 首屏 Hero 区 ---
 hero:
   badgeText: VibeCoding ~
-  title: Limbo
-  subtitle: 前景可待 · 未来可期
+  title: 我是Limbo
+  subtitle: 未来可期
   # 首屏左侧照片路径，留空则显示 user 图标占位；上传后会写入 /photos/ 目录
-  image: '/photos/photo-1785601536511.jpg'
-  description: VibeCoding爱好者
+  image: '/photos/photo-1785669218708.jpg'
+  description: 一个无所事事的VibeCoding爱好者。
   skills:
     - Vue.js
     - TypeScript
     - Go
-    - Git
+    - Nuxt.js
     - Docker
   stats:
     - value: '1'
@@ -81,6 +81,13 @@ hero:
 
 # --- 精选项目 ---
 projects:
+  - title: personal-homepage-design
+    desc: 一个有质感的个人主页项目模板。配置驱动、可实时可视化编辑。
+    lang: Astro
+    stars: '0'
+    year: '2026'
+    license: MIT
+    url: https://github.com/limbo947/personal-homepage-design
   - title: 项目一
     desc: 一个记录灵感与日常的写作工具，支持离线草稿与多端同步，让书写没有门槛。
     lang: TypeScript
@@ -130,16 +137,18 @@ footer:
 # 修改后通过编辑面板「保存并应用」预览，或「固化」写回此文件
 theme:
   light:
-    background: '#ffffff' # 暖纸色页面底色
-    foreground: '#26221d' # 暖棕黑正文
+    background: '#faf8f5' # 暖纸色页面底色
+    foreground: '#000000' # 暖棕黑正文
     card: '#ffffff' # 卡片表面
-    border: '#e4ded4' # 描边
-    primary: '#198686' # 青绿主色
+    border: '#a39f9f' # 描边
+    primary: '#1a8c8c' # 青绿主色
     accent: '#b0631b' # 暖橙点缀
+    grid: '#eee7dd' # Hero 背景网格/点阵色
   dark:
-    background: '#000000' # 暖黑底色
+    background: '#1a1714' # 暖黑底色
     foreground: '#f2eee8' # 暖白正文
     card: '#26221d' # 卡片表面
-    border: '#000000' # 描边
+    border: '#3a352e' # 描边
     primary: '#4cbfbd' # 提亮青绿
-    accent: '#a69c91' # 提亮暖橙
+    accent: '#e29744' # 提亮暖橙
+    grid: '#3a352e' # Hero 背景网格/点阵色

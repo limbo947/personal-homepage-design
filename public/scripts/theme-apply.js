@@ -96,6 +96,7 @@
     decl('foreground', palette.foreground);
     decl('card', palette.card);
     decl('border', palette.border);
+    decl('grid', palette.grid);
     decl('primary', palette.primary);
     // 前景色取卡片色（亮色）或背景色（暗色提亮主色配深色按钮文字），
     // 与 global.css 的 :root / html.dark 定义保持一致，避免 dev/生产按钮文字色不同

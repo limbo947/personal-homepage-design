@@ -113,6 +113,7 @@ export interface ThemePalette {
   border: string;
   primary: string;
   accent: string;
+  grid: string;
 }
 
 /** 主题配置：明/暗两组独立调色 */
@@ -175,6 +176,7 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
       border: '#e4ded4',
       primary: '#1a8c8c',
       accent: '#b0631b',
+      grid: '#e4ded4',
     },
     dark: {
       background: '#1a1714',
@@ -183,6 +185,7 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
       border: '#3a352e',
       primary: '#4cbfbd',
       accent: '#e29744',
+      grid: '#3a352e',
     },
   },
 };
