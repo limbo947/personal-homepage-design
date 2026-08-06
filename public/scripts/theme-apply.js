@@ -1,13 +1,15 @@
 /**
- * 主题覆盖应用脚本（仅 dev 期加载）
+ * 主题覆盖应用脚本（生产+dev 均加载）
  *
- * 与 cfg-apply.js 类似，但专门处理 theme.* 路径的覆盖。
+ * 生产环境：读取 SSG 注入的初始 theme，派生 CSS 变量并注入 style 元素
+ * dev 环境：额外合并 localStorage 中的覆盖，支持 EditPanel 实时预览
+ *
  * localStorage 中 theme 覆盖键为 'site-theme-overrides'，
  * 结构扁平：{ "theme.light.primary": "#xxx", "theme.dark.accent": "#xxx", ... }
  *
  * 应用逻辑：
  * 1. 读取 SSG 注入的初始 theme（<script id="theme-init"> 数据块）
- * 2. 合并 localStorage 中的覆盖
+ * 2. 合并 localStorage 中的覆盖（dev 期有值，生产为空）
  * 3. 用 themeDerive 的派生算法生成 :root / .dark 的 CSS 变量规则并注入 style 元素
  *
  * 暴露 window.applyThemeOverrides 供 EditPanel 调用

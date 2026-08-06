@@ -378,8 +378,13 @@ function fieldGroupsForRender() {
 </div>
 
 <script>
-  import { createIcons, icons } from 'lucide';
-  import { THEME_PRESETS } from '../data/theme-presets';
+  // DEV-only：整个 script 用 import.meta.env.DEV 守卫 + 动态 import，
+  // 生产构建时 Vite 把 import.meta.env.DEV 替换为 false，Rollup 死代码消除移除整个块，
+  // 连动态 import 的模块都不会打包，彻底消除 13KB 死代码
+  if (import.meta.env.DEV) {
+    const [{ THEME_PRESETS }] = await Promise.all([
+      import('../data/theme-presets'),
+    ]);
 
   // 编辑面板交互逻辑：打开/关闭、填充表单、保存、固化、增删项
   // cfg 存文本/图片覆盖，theme 单独存储避免与 cfg-apply 冲突（theme-apply 独立处理）
@@ -590,7 +595,8 @@ function fieldGroupsForRender() {
     container.appendChild(clone);
 
     // 重新渲染 lucide 图标（克隆的 <i> 可能未被 lucide 处理）
-    createIcons({ icons });
+    // 调用 DefaultLayout 暴露的全局函数，统一用完整 icons 对象渲染
+    window.__recreateIcons?.();
 
     // 2. 克隆面板内该数组的子组
     addPanelSubGroup(arrayPath, newIndex);
@@ -951,9 +957,10 @@ function fieldGroupsForRender() {
     if (other) other.value = target.value;
   });
 
-  // 固化后 HMR 刷新页面，检查 sessionStorage 标记并显示成功反馈
-  if (sessionStorage.getItem('cfg-persisted') === '1') {
-    sessionStorage.removeItem('cfg-persisted');
-    setTimeout(() => showToast(), 200);
+    // 固化后 HMR 刷新页面，检查 sessionStorage 标记并显示成功反馈
+    if (sessionStorage.getItem('cfg-persisted') === '1') {
+      sessionStorage.removeItem('cfg-persisted');
+      setTimeout(() => showToast(), 200);
+    }
   }
 </script>

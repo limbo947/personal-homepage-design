@@ -30,8 +30,8 @@ hero:
   title: 我是Limbo
   subtitle: 未来可期
   # 首屏左侧照片路径，留空则显示 user 图标占位；上传后会写入 /photos/ 目录
-  image: '/photos/photo-1785669218708.jpg'
-  description: 一个无所事事的VibeCoding爱好者。
+  image: '/photos/photo-1785669178342.jpg'
+  description: 一个VibeCoding爱好者。
   skills:
     - Vue.js
     - TypeScript

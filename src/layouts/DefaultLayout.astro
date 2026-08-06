@@ -55,9 +55,37 @@ const themeInit = siteConfig.theme ?? null;
   {/* 编辑面板仅在 dev 模式渲染，生产构建不输出任何 HTML，普通访客不可见 */}
   {import.meta.env.DEV && <EditPanel />}
 
-  <!-- Lucide 图标渲染：需显式传入 icons 对象，否则 createIcons 找不到图标定义 -->
+  <!-- Lucide 图标渲染：按需导入生产 15 个图标 + dev 额外 8 个编辑面板图标 -->
+  <!-- dev 图标只在 import.meta.env.DEV 块中使用，生产构建时 Rollup tree-shake 移除 -->
   <script>
-    import { createIcons, icons } from 'lucide';
+    import {
+      createIcons,
+      // 生产图标（10 静态 + 5 来自 config.yaml 动态绑定）
+      User, Code2, Palette, Bell, ArrowRight,
+      Sun, Moon, Star, Clock, Scale,
+      Send, Feather, Box, FileText, PenTool,
+      // dev 图标（仅 EditPanel 使用，生产构建被 tree-shake）
+      Settings2, SlidersHorizontal, X, Trash2,
+      Image as ImageIcon, Plus, Check, Save,
+    } from 'lucide';
+
+    const icons = {
+      User, Code2, Palette, Bell, ArrowRight,
+      Sun, Moon, Star, Clock, Scale,
+      Send, Feather, Box, FileText, PenTool,
+    };
+
+    // dev 模式下加入编辑面板图标，统一由 DefaultLayout 的 createIcons 渲染
+    // 避免EditPanel单独调用createIcons遍历全页导致"icon not found"警告
+    if (import.meta.env.DEV) {
+      Object.assign(icons, {
+        Settings2, SlidersHorizontal, X, Trash2,
+        Image: ImageIcon, Plus, Check, Save,
+      });
+      // 暴露重渲染函数供 EditPanel 的 addItem 克隆元素后调用
+      window.__recreateIcons = () => createIcons({ icons });
+    }
+
     createIcons({ icons });
   </script>
   <!-- 悬浮导航滚动状态：监听滚动切换导航透明度与阴影 -->
