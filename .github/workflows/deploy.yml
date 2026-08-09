@@ -1,0 +1,47 @@
+name: Build and Deploy
+
+# 触发策略：
+# - push 到 main 时部署，但仅修改文档/配置文件时跳过（paths-ignore 让 README 等无关变更不触发构建）
+# - workflow_dispatch 支持手动触发，方便绕过 paths-ignore 强制部署
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - '*.md'
+      - '**/*.md'
+      - 'LICENSE'
+      - '.gitignore'
+      - '.github/**'
+      - 'agent.md'
+      - 'design.md'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    # 并发控制：同一项目同时只允许一个部署在跑，避免旧推送覆盖新推送
+    concurrency:
+      group: edgeone-deploy
+      cancel-in-progress: false
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.11.0'   # 与 EdgeOne 构建环境一致，见项目 .nvmrc / package.json engines
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      # -a overseas：项目的加速区域是 overseas，默认 global 会部署到错误区域
+      # -n：项目名与 EdgeOne Pages 控制台中的项目一致，复用已有项目
+      # 部署为"上传"方式，会创建一个新 deployment 覆盖线上版本
+      - name: Deploy to EdgeOne Makers
+        run: npx edgeone makers deploy ./dist -n personal-homepage-overseas -a overseas -e production -t ${{ secrets.EDGEONE_API_TOKEN }}

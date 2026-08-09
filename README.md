@@ -32,8 +32,9 @@
 - **配置驱动** — 所有展示内容集中在根目录 `config.yaml`，改文案不用进组件
 - **实时编辑** — dev 模式右下角齿轮按钮弹出面板，编辑/增删所有字段，一键固化回 YAML
 - **主题配色编辑** — 6 语义色 × 明暗两组，9 套预设一键换肤，色阶由主色 HSL 自动派生
-- **图片上传** — Hero 照片面板内上传，自动写入 `public/photos/` 并回填路径
+- **图片上传** — Hero 照片面板内上传，自动写入 `public/photos/` 并回填路径（现有照片已转 WebP 压缩，体积约减 67%）
 - **设计 token** — 颜色/字号/间距/阴影以 `--personal-*` 变量集中管理，换肤不改组件
+- **SEO 内建** — 自动生成 canonical / Open Graph / Twitter Card / JSON-LD，随附 `robots.txt` 与 `sitemap.xml`
 
 ## 技术栈
 
@@ -62,6 +63,7 @@ site:
   title: 个人主页
   description: 站点描述
   author: 你的名字
+  url: https://example.com     # 站点绝对地址（SEO canonical / Open Graph 依赖，必填）
 
 # 首页首屏
 hero:
@@ -112,6 +114,8 @@ npm run build
 
 将 `dist/` 目录托管到任意静态服务（Vercel、Cloudflare Pages、Nginx 等）。
 
+**本项目使用 EdgeOne Pages 部署**：GitHub 集成后，推送代码到 `main` 分支即自动构建部署到生产环境（无需手动上传 `dist/`），自定义域名 `ysalo.cn` / `www.ysalo.cn`。
+
 ## 目录结构
 
 ```
@@ -128,8 +132,10 @@ src/
 └── styles/global.css     # 设计 token + Tailwind 入口
 public/
 ├── fonts/                # 自托管字体
-├── photos/               # 上传图片存放处（运行时生成）
-└── scripts/              # 客户端脚本（覆盖/滚动/主题应用）
+├── photos/               # 上传图片存放处（当前为 WebP 格式）
+├── scripts/              # 客户端脚本（覆盖/滚动/主题应用）
+├── robots.txt            # 搜索引擎抓取规则
+└── sitemap.xml           # 站点地图
 ```
 
 ## 许可证
