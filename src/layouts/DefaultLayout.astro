@@ -16,6 +16,25 @@ const { title = siteConfig.site.title, description = siteConfig.site.description
 
 // 主题数据：SSG 时序列化为 JSON 注入页面，供 theme-apply.js 作为 base 合并覆盖
 const themeInit = siteConfig.theme ?? null;
+
+// 站点绝对地址：用于 canonical 与社交分享链接，缺失时回退到相对路径
+const siteUrl = (siteConfig.site.url ?? '').replace(/\/$/, '');
+// 社交分享图片：优先取首屏照片，构造为绝对 URL 供 OG/Twitter 抓取
+const ogImage = siteUrl && siteConfig.hero.image
+  ? `${siteUrl}${siteConfig.hero.image}`
+  : `${siteUrl}/favicon.png`;
+// 结构化数据：WebSite + Person 双重描述，利于搜索引擎理解站点归属与作者
+const jsonLd = JSON.stringify({
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: siteConfig.site.title,
+  description: siteConfig.site.description,
+  ...(siteUrl ? { url: siteUrl } : {}),
+  author: {
+    '@type': 'Person',
+    name: siteConfig.site.author,
+  },
+});
 ---
 
 <!DOCTYPE html>
@@ -25,6 +44,28 @@ const themeInit = siteConfig.theme ?? null;
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>{title}</title>
   <meta name="description" content={description} />
+  <meta name="author" content={siteConfig.site.author} />
+  <meta name="generator" content="Astro" />
+  <!-- 规范链接：避免 www/非 www 等变体被搜索引擎视为重复内容 -->
+  {siteUrl && <link rel="canonical" href={siteUrl} />}
+
+  <!-- Open Graph：控制微信、Facebook 等社交平台分享时展示的标题/描述/图片 -->
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content={title} />
+  <meta property="og:description" content={description} />
+  <meta property="og:site_name" content={siteConfig.site.title} />
+  <meta property="og:locale" content="zh_CN" />
+  {siteUrl && <meta property="og:url" content={siteUrl} />}
+  <meta property="og:image" content={ogImage} />
+
+  <!-- Twitter Card：控制 Twitter/X 分享卡片样式 -->
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content={title} />
+  <meta name="twitter:description" content={description} />
+  <meta name="twitter:image" content={ogImage} />
+
+  <!-- 结构化数据：WebSite 描述，便于搜索引擎丰富摘要展示 -->
+  <script type="application/ld+json" set:html={jsonLd} />
   <!-- 主题初始化：尽早同步执行，避免明暗切换时闪烁（FOUC） -->
   <script is:inline>
     (function () {

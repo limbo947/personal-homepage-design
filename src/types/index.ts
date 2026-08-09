@@ -146,6 +146,7 @@ export const DEFAULT_SITE_CONFIG: SiteConfig = {
     title: '个人主页',
     description: '',
     author: '',
+    url: '',
     favicon: '/favicon.png',
   },
   nav: [],
