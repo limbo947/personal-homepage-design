@@ -1,3 +1,6 @@
+# 项目内部数据与记忆（工具生成的本地工作数据，不随仓库公开）
+.codebuddy/
+
 # build output
 dist/
 .astro/
@@ -26,6 +29,8 @@ pnpm-debug.log*
 # IDE settings
 .idea/
 .vscode/
+*.swp
+*.swo
 
 # Windows-specific files
 Thumbs.db
@@ -41,3 +46,13 @@ doc/
 
 # Cloudflare Wrangler 本地状态
 .wrangler/
+
+# 常见工具缓存与临时文件
+.tmp/
+temp/
+.cache/
+# Tencent Cloud EdgeOne
+.env
+.edgeone/*
+.tef_dist/*
+  
