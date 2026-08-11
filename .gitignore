@@ -41,7 +41,7 @@ Desktop.ini
 site-cfg-overrides.json
 
 # AI 协作内部文档（不随仓库公开）
-agent.md
+agents.md
 doc/
 
 # Cloudflare Wrangler 本地状态

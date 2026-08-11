@@ -55,9 +55,10 @@ const ALLOWED_PATTERNS = [
   /^hero\.primaryAction\.text$/,
   /^hero\.skills\.\d+$/,
   /^hero\.stats\.\d+\.(value|label)$/,
-  /^projects\.\d+\.(title|desc|lang|stars|year|license|url)$/,
+  /^projects\.\d+\.(title|desc|lang|stars|year|license)$/,
   /^sites\.\d+\.(title|desc|tag)$/,
   /^articles\.\d+\.(title|desc|category|date)$/,
+  /^footer\.motto$/,
   /^theme\.(light|dark)\.(background|foreground|card|border|primary|accent|grid)$/,
 ];
 

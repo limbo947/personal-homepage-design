@@ -10,7 +10,7 @@
 site:
   title: 个人主页
   description: 一名热爱书写与创造的前端工程师，用代码与文字记录生活的温度。
-  author: Limbo
+  author: ysalo
   url: https://ysalo.cn
   favicon: /favicon.png
 
@@ -28,7 +28,7 @@ nav:
 # --- 首屏 Hero 区 ---
 hero:
   badgeText: VibeCoding ~
-  title: 我是Limbo
+  title: ysalo
   subtitle: 未来可期
   # 首屏左侧照片路径，留空则显示 user 图标占位；上传后会写入 /photos/ 目录
   image: '/photos/photo-1785669178342.webp'
@@ -89,18 +89,6 @@ projects:
     year: '2026'
     license: MIT
     url: https://github.com/limbo947/personal-homepage-design
-  - title: 项目一
-    desc: 一个记录灵感与日常的写作工具，支持离线草稿与多端同步，让书写没有门槛。
-    lang: TypeScript
-    stars: 1.2k
-    year: '2025'
-    license: MIT
-  - title: 项目二
-    desc: 用于个人站点的一键部署脚本，集成构建、发布与回滚，几分钟内完成上线。
-    lang: Go
-    stars: 860
-    year: '2025'
-    license: Apache-2.0
 
 # --- 上线网站 ---
 sites:
@@ -115,11 +103,6 @@ sites:
 
 # --- 近期文章 ---
 articles:
-  - icon: file-text
-    category: 随笔
-    title: 文章一
-    desc: 聊聊这一年我如何整理自己的知识体系，以及写作带给我的改变。
-    date: '2026-07-21'
   - icon: pen-tool
     category: 技术笔记
     title: 文章二
@@ -128,7 +111,7 @@ articles:
 
 # --- 页脚 ---
 footer:
-  motto: 愿每一次创作，都如晨光般温润而笃定。
+  motto: 小舟从此逝，江海寄余生
   startYear: 2026
   # 部署在国内服务器时按需补充工信部/公安备案信息
   icp: []
@@ -138,7 +121,7 @@ footer:
 # 修改后通过编辑面板「保存并应用」预览，或「固化」写回此文件
 theme:
   light:
-    background: '#faf8f5' # 暖纸色页面底色
+    background: '#ffffff' # 暖纸色页面底色
     foreground: '#000000' # 暖棕黑正文
     card: '#ffffff' # 卡片表面
     border: '#a39f9f' # 描边

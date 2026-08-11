@@ -351,3 +351,12 @@ html.dark {
 @media (prefers-reduced-motion: reduce) {
   .site-nav { transition: none; }
 }
+
+/* 渐变文字：背景裁剪文字，颜色取自主色阶与点缀色阶 */
+/* 从 HeroSection 提升到全局，供导航栏署名等复用 */
+.text-gradient-hero {
+  background-image: linear-gradient(110deg, var(--personal-primary-700), var(--personal-primary-400) 55%, var(--personal-accent-500));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
