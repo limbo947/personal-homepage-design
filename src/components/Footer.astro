@@ -5,7 +5,7 @@ const { footer, site } = siteConfig;
 const year = new Date().getFullYear();
 ---
 
-<footer id="contact" class="scroll-mt-24 border-t border-[var(--personal-border)] bg-[var(--personal-card)] py-10">
+<footer id="contact" class="scroll-mt-24 bg-[var(--personal-card)] pt-10 pb-6">
   <div class="mx-auto flex max-w-6xl flex-col items-center gap-2 px-6 text-center">
     <p class="text-[var(--personal-muted-foreground)]" style="font-size:var(--personal-font-size-body);line-height:var(--personal-line-height-body)">© {year} <span data-cfg="site.author">{site.author}</span></p>
     <p style="font-size:var(--personal-font-size-body);font-weight:var(--personal-font-weight-h3);line-height:var(--personal-line-height-body)" data-cfg="footer.motto">{footer.motto}</p>

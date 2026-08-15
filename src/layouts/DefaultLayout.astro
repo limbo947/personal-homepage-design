@@ -46,6 +46,8 @@ const jsonLd = JSON.stringify({
   <meta name="description" content={description} />
   <meta name="author" content={siteConfig.site.author} />
   <meta name="generator" content="Astro" />
+  <!-- 网站图标：路径由集中配置 site.favicon 指定 -->
+  {siteConfig.site.favicon && <link rel="icon" href={siteConfig.site.favicon} />}
   <!-- 规范链接：避免 www/非 www 等变体被搜索引擎视为重复内容 -->
   {siteUrl && <link rel="canonical" href={siteUrl} />}
 

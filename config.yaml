@@ -8,7 +8,7 @@
 
 # --- 站点基础元信息：用于 <head> 与页头品牌区 ---
 site:
-  title: 个人主页
+  title: ysalo
   description: 一名热爱书写与创造的前端工程师，用代码与文字记录生活的温度。
   author: ysalo
   url: https://ysalo.cn
@@ -103,10 +103,6 @@ sites:
     tag: 博客
     title: 站点二
     desc: 记录生活与思考的独立博客，以文字丈量时间。
-  - icon: box
-    tag: 开源
-    title: 站点四
-    desc: 开源一些小而美的工具与库，欢迎交流与共建。
 
 # --- 近期文章 ---
 articles:
