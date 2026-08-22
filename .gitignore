@@ -52,7 +52,6 @@ doc/
 temp/
 .cache/
 # Tencent Cloud EdgeOne
-.env
 .edgeone/*
 .tef_dist/*
   

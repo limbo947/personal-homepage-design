@@ -18,7 +18,7 @@
 
 ## 关于
 
-基于 Astro 静态站点生成（SSG）模式的个人主页模板：个人简介、精选项目、上线网站、近期文章整合在一个页面里。全站内容由 `config.yaml` 驱动，dev 模式下所有字段都可在浏览器中可视化编辑并固化回配置文件。
+基于 Astro 静态站点生成（SSG）模式的个人主页模板：当前首页由个人简介与精选项目组成（上线网站、近期文章板块已预留，在 `src/pages/index.astro` 中注释隐藏，需要时取消注释即可恢复）。全站内容由 `config.yaml` 驱动，dev 模式下所有字段都可在浏览器中可视化编辑并固化回配置文件。
 
 改编自 [FlecHome](https://github.com/talen8/FlecHome)，将技术栈从 Nuxt 迁移到 Astro（默认零 JS、产物更轻量），并新增了设计 token 体系与可视化编辑面板。
 
@@ -122,6 +122,7 @@ npm run build
 
 ```
 config.yaml               # 站点集中配置（文案/项目/文章/导航/主题配色…改这里即可）
+design.md                 # 设计规范文档（视觉风格/设计令牌/组件规格）
 astro.config.mjs          # Astro + Tailwind v4 Vite 插件 + cfgWriterPlugin（dev 端点）
 scripts/
 └── cfg-writer-plugin.mjs # Vite 插件：dev server 暴露 YAML 写入/删除/图片上传端点
